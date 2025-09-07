@@ -1,0 +1,12 @@
+# Vercel ignore file
+node_modules/
+.git/
+.env
+.env.local
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Keep only the original index.html as backup
+# Use index_clean.html as the main file
