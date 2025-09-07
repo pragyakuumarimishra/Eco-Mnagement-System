@@ -1,8 +1,33 @@
 {
+  "functions": {
+    "app.js": {
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     {
       "source": "/",
-      "destination": "/index_clean.html"
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/styles.css",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/css"
+        }
+      ]
+    },
+    {
+      "source": "/script.js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        }
+      ]
     }
   ]
 }

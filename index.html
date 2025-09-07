@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Utility Hub | Waste Locator</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet.js for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for usage charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="bg-slate-900 text-slate-300 antialiased">
+
+    <!-- Debug Info -->
+    <div id="debug-info" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; font-size: 12px; z-index: 10000; display: none;">
+        <div>CSS: <span id="css-status">❌</span></div>
+        <div>JS: <span id="js-status">❌</span></div>
+        <div>Tailwind: <span id="tailwind-status">❌</span></div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-800/80 backdrop-blur-sm shadow-sm sticky top-0 z-20 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <svg class="h-8 w-8 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+                    </svg>
+                    <h1 class="text-xl font-bold text-slate-100">Eco-Utility Hub</h1>
+                </div>
+                <nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
+                    <a href="#" class="nav-link text-emerald-500 font-semibold transition-colors" data-tab="waste">Waste Locator</a>
+                    <a href="#" class="nav-link text-slate-400 hover:text-emerald-500 transition-colors flex items-center" data-tab="pickup">
+                        Pickup Planner
+                        <svg class="h-3 w-3 ml-1 text-slate-500 login-required-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    <a href="#" class="nav-link text-slate-400 hover:text-emerald-500 transition-colors flex items-center" data-tab="leak">
+                        Leak Detector
+                        <svg class="h-3 w-3 ml-1 text-slate-500 login-required-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                    </a>
+                    <div class="flex items-center space-x-4 ml-8">
+                        <div id="user-menu" class="hidden">
+                            <span id="user-name" class="text-slate-300 text-sm"></span>
+                            <button id="logout-btn" class="ml-3 text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded hover:bg-slate-600 transition-colors">Logout</button>
+                        </div>
+                        <div id="auth-buttons">
+                            <button id="login-btn" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 transition-colors text-sm">Login</button>
+                            <button id="signup-btn" class="ml-2 text-emerald-400 hover:text-emerald-300 transition-colors text-sm">Sign Up</button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div id="tab-content">
+        <div class="text-center mb-10" id="waste-header">
+          <h2 class="text-3xl font-extrabold tracking-tight text-slate-50 sm:text-4xl">Find a Drop-Off Location</h2>
+          <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">Locate verified sites for e-waste and medical waste near you.</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="waste-tab">
+          <!-- Waste Locator content starts here -->
+          
+          <!-- Left Column: Filters & List -->
+          <div class="lg:col-span-1 space-y-8">
+              <!-- Filters -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                  <div class="flex items-center justify-between mb-5">
+                      <h3 class="flex items-center text-lg font-semibold text-slate-100">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                          </svg>
+                          Filter Locations
+                      </h3>
+                      <button id="geolocate-btn" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2a1 1 0 011 1v1.06a8.002 8.002 0 016.94 6.94H21a1 1 0 110 2h-1.06A8.002 8.002 0 0113 19.94V21a1 1 0 11-2 0v-1.06A8.002 8.002 0 014.06 13H3a1 1 0 110-2h1.06A8.002 8.002 0 0111 4.06V3a1 1 0 011-1zm0 5a5 5 0 100 10 5 5 0 000-10z"/>
+                          </svg>
+                          Use my location
+                      </button>
+                  </div>
+                  <div class="space-y-5">
+                      <div>
+                          <label for="filter-type" class="block text-sm font-medium text-slate-300 mb-1">Waste Type</label>
+                          <select id="filter-type" class="mt-1 block w-full pl-3 pr-10 py-2.5 text-base bg-slate-700 border-slate-600 text-slate-200 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg shadow-sm">
+                              <option value="all">All Types</option>
+                              <option value="e-waste">E-Waste</option>
+                              <option value="medical">Medical Waste</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label for="filter-material" class="block text-sm font-medium text-slate-300 mb-1">Accepted Materials</label>
+                          <select id="filter-material" class="mt-1 block w-full pl-3 pr-10 py-2.5 text-base bg-slate-700 border-slate-600 text-slate-200 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-lg shadow-sm">
+                              <option value="all">Any Material</option>
+                              <option value="batteries">Batteries</option>
+                              <option value="computers">Computers & Laptops</option>
+                              <option value="phones">Phones & Tablets</option>
+                              <option value="sharps">Sharps</option>
+                              <option value="medications">Unused Medications</option>
+                          </select>
+                      </div>
+                      <div class="flex items-center pt-2">
+                          <input id="filter-open" type="checkbox" class="h-4 w-4 text-emerald-600 bg-slate-700 border-slate-600 rounded focus:ring-emerald-500 cursor-pointer">
+                          <label for="filter-open" class="ml-3 block text-sm font-medium text-slate-200 cursor-pointer">Open Now</label>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Location List -->
+              <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-lg overflow-hidden">
+                  <div class="p-4 border-b border-slate-700 bg-slate-900/50">
+                      <h3 class="flex items-center text-lg font-semibold text-slate-100">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                           </svg>
+                          Nearby Sites
+                      </h3>
+                      <p id="results-count" class="text-sm text-slate-400 mt-1">0 results found</p>
+                  </div>
+                  <div id="location-list" class="divide-y divide-slate-700 h-[600px] overflow-y-auto custom-scrollbar">
+                      <!-- Location items will be injected here -->
+                      <div id="no-results" class="p-8 text-center text-slate-500">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                           </svg>
+                          <p class="mt-4 font-semibold text-slate-400">No locations found</p>
+                          <p class="text-sm">Try expanding your search criteria.</p>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Right Column: Map -->
+          <div class="lg:col-span-2 bg-slate-800 border border-slate-700 p-2 rounded-xl shadow-2xl min-h-[500px]">
+              <div id="map" class="rounded-lg"></div>
+          </div>
+        </div>
+        <div id="pickup-tab" style="display:none">
+          <div class="text-center mb-10">
+            <h2 class="text-3xl font-extrabold tracking-tight text-slate-50 sm:text-4xl">Pickup Planner</h2>
+            <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">Schedule convenient waste pickup for your home or business.</p>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Pickup Request Form -->
+            <div class="lg:col-span-2 space-y-6">
+              <!-- Contact Information -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Contact Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Full Name *</label>
+                    <input type="text" id="pickup-name" placeholder="Enter your name" 
+                           class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Phone Number *</label>
+                    <input type="tel" id="pickup-phone" placeholder="+91 12345 67890" 
+                           class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                    <input type="email" id="pickup-email" placeholder="your.email@example.com" 
+                           class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pickup Address -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Pickup Address</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Street Address *</label>
+                    <input type="text" id="pickup-address" placeholder="Street address, building number" 
+                           class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-2">City *</label>
+                      <input type="text" id="pickup-city" value="Kolkata" 
+                             class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-300 mb-2">PIN Code *</label>
+                      <input type="text" id="pickup-pincode" placeholder="700001" 
+                             class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Waste Details -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Waste Details</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Waste Type *</label>
+                    <select id="pickup-waste-type" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <option value="">Select waste type</option>
+                      <option value="e-waste">E-Waste (Electronics)</option>
+                      <option value="medical">Medical Waste</option>
+                      <option value="household">Household Waste</option>
+                      <option value="bulk">Bulk Items (Furniture, etc.)</option>
+                      <option value="hazardous">Hazardous Waste</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Items Description *</label>
+                    <textarea id="pickup-items" rows="3" placeholder="Describe the items to be picked up (e.g., old laptop, printer, 2 CRT monitors)" 
+                              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Estimated Weight</label>
+                    <select id="pickup-weight" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <option value="light">Light (< 10 kg)</option>
+                      <option value="medium">Medium (10-50 kg)</option>
+                      <option value="heavy">Heavy (50-100 kg)</option>
+                      <option value="bulk">Bulk (> 100 kg)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Preferred Timing -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Preferred Pickup Time</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Preferred Date *</label>
+                    <input type="date" id="pickup-date" 
+                           class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Time Slot *</label>
+                    <select id="pickup-time" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <option value="">Select time slot</option>
+                      <option value="morning">Morning (9 AM - 12 PM)</option>
+                      <option value="afternoon">Afternoon (12 PM - 4 PM)</option>
+                      <option value="evening">Evening (4 PM - 7 PM)</option>
+                      <option value="flexible">Flexible</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="mt-4">
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Special Instructions</label>
+                  <textarea id="pickup-instructions" rows="2" placeholder="Any special instructions for pickup (e.g., gate code, contact building security)" 
+                            class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="text-center">
+                <button id="submit-pickup-request" class="w-full md:w-auto bg-emerald-600 text-white py-3 px-8 rounded-lg hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors text-lg font-semibold">
+                  Schedule Pickup
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Column: Pickup Requests History -->
+            <div class="lg:col-span-1 space-y-6">
+              <!-- Pricing Info -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Pricing Guide</h3>
+                <div class="space-y-3 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-slate-300">E-Waste (Light)</span>
+                    <span class="text-emerald-400">₹50-100</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-300">E-Waste (Heavy)</span>
+                    <span class="text-emerald-400">₹150-300</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-300">Medical Waste</span>
+                    <span class="text-emerald-400">₹200-500</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-300">Bulk Items</span>
+                    <span class="text-emerald-400">₹300-800</span>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">*Prices may vary based on location and item condition</p>
+              </div>
+
+              <!-- Recent Requests -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Your Pickup Requests</h3>
+                <div id="pickup-requests-list" class="space-y-3 max-h-96 overflow-y-auto">
+                  <!-- Pickup requests will be populated here -->
+                </div>
+              </div>
+
+              <!-- Tips -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">💡 Tips</h3>
+                <ul class="space-y-2 text-sm text-slate-300">
+                  <li>• Clean items before pickup</li>
+                  <li>• Remove personal data from electronics</li>
+                  <li>• Have items ready at pickup location</li>
+                  <li>• Keep original purchase receipts if available</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="leak-tab" style="display:none">
+          <div class="text-center mb-10">
+            <h2 class="text-3xl font-extrabold tracking-tight text-slate-50 sm:text-4xl">Leak Detector</h2>
+            <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">Monitor your water and electricity usage to detect potential leaks.</p>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Column: Meter Reading Input -->
+            <div class="space-y-6">
+              <!-- Utility Type Selection -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Record Meter Reading</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Utility Type</label>
+                    <select id="utility-type" class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <option value="water">Water Meter</option>
+                      <option value="electricity">Electricity Meter</option>
+                    </select>
+                  </div>
+                  
+                  <!-- Photo Upload -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Upload Meter Photo (Optional)</label>
+                    <div class="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center">
+                      <input type="file" id="meter-photo" accept="image/*" class="hidden">
+                      <div id="photo-upload-area" class="cursor-pointer" onclick="document.getElementById('meter-photo').click()">
+                        <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <p class="mt-2 text-sm text-slate-400">Click to upload meter photo</p>
+                        <p class="text-xs text-slate-500">PNG, JPG up to 10MB</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Manual Reading Input -->
+                  <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Current Reading</label>
+                    <input type="number" id="meter-reading" placeholder="Enter meter reading" 
+                           class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+                           step="0.01">
+                  </div>
+                  
+                  <!-- Submit Button -->
+                  <button id="submit-reading" class="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
+                    Record Reading
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Recent Readings -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Recent Readings</h3>
+                <div id="recent-readings" class="space-y-3 max-h-60 overflow-y-auto">
+                  <!-- Recent readings will be populated here -->
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right Column: Usage Chart & Anomalies -->
+            <div class="space-y-6">
+              <!-- Usage Trend Chart -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Usage Trend</h3>
+                <div class="h-64 flex items-center justify-center bg-slate-700 rounded-lg">
+                  <canvas id="usage-chart" width="400" height="200"></canvas>
+                </div>
+              </div>
+              
+              <!-- Anomaly Alerts -->
+              <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-slate-100 mb-4">Anomaly Alerts</h3>
+                <div id="anomaly-alerts" class="space-y-3">
+                  <!-- Anomaly alerts will be populated here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Login/Signup Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-slate-700">
+                <h3 id="modal-title" class="text-xl font-semibold text-slate-100">Login</h3>
+                <button id="close-modal" class="text-slate-400 hover:text-slate-200 transition-colors">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6">
+                <!-- Login Form -->
+                <div id="login-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                            <input type="email" id="login-email" placeholder="Enter your email" 
+                                   class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                            <input type="password" id="login-password" placeholder="Enter your password" 
+                                   class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <button id="login-submit" class="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
+                            Login
+                        </button>
+                    </div>
+                    <p class="text-center text-slate-400 text-sm mt-4">
+                        Don't have an account? 
+                        <button id="switch-to-signup" class="text-emerald-400 hover:text-emerald-300 transition-colors">Sign up</button>
+                    </p>
+                </div>
+
+                <!-- Signup Form -->
+                <div id="signup-form" class="hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+                            <input type="text" id="signup-name" placeholder="Enter your full name" 
+                                   class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                            <input type="email" id="signup-email" placeholder="Enter your email" 
+                                   class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Phone</label>
+                            <input type="tel" id="signup-phone" placeholder="Enter your phone number" 
+                                   class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                            <input type="password" id="signup-password" placeholder="Create a password" 
+                                   class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
+                            <input type="password" id="signup-confirm-password" placeholder="Confirm your password" 
+                                   class="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <button id="signup-submit" class="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors">
+                            Create Account
+                        </button>
+                    </div>
+                    <p class="text-center text-slate-400 text-sm mt-4">
+                        Already have an account? 
+                        <button id="switch-to-login" class="text-emerald-400 hover:text-emerald-300 transition-colors">Login</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800/50 mt-16 border-t border-slate-700">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center text-sm text-slate-400">
+            <p>&copy; 2025 Eco-Utility Hub. All rights reserved.</p>
+            <p class="mt-1">Providing sustainable solutions for modern communities.</p>
+        </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="./script.js"></script>
+    
+    <!-- Debug Script -->
+    <script>
+        console.log('HTML loaded');
+        
+        // Show debug info
+        const debugDiv = document.getElementById('debug-info');
+        if (debugDiv) {
+            debugDiv.style.display = 'block';
+        }
+        
+        // Check if external files are loading
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            // Check Tailwind
+            const body = document.body;
+            const computedStyle = window.getComputedStyle(body);
+            const bgColor = computedStyle.backgroundColor;
+            console.log('Body background color:', bgColor);
+            
+            if (bgColor.includes('rgb') && bgColor !== 'rgba(0, 0, 0, 0)') {
+                document.getElementById('tailwind-status').textContent = '✅';
+            }
+            
+            // Check if elements exist
+            const header = document.querySelector('header');
+            console.log('Header found:', !!header);
+            
+            // Check if main app elements exist
+            const wasteTab = document.getElementById('waste-tab');
+            const pickupTab = document.getElementById('pickup-tab');
+            const leakTab = document.getElementById('leak-tab');
+            
+            console.log('Waste tab:', !!wasteTab);
+            console.log('Pickup tab:', !!pickupTab);
+            console.log('Leak tab:', !!leakTab);
+            
+            // Update JS status
+            document.getElementById('js-status').textContent = '✅';
+        });
+        
+        // Check CSS loading
+        const link = document.querySelector('link[href*="styles.css"]');
+        if (link) {
+            link.onload = function() {
+                console.log('CSS loaded successfully');
+                document.getElementById('css-status').textContent = '✅';
+            };
+            link.onerror = function() {
+                console.error('CSS failed to load');
+                document.getElementById('css-status').textContent = '❌';
+            };
+        }
+        
+        // Error handling for missing resources
+        window.addEventListener('error', function(e) {
+            console.error('Resource loading error:', e.target.src || e.target.href);
+        });
+    </script>
+</body>
+</html>
