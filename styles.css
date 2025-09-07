@@ -1,0 +1,52 @@
+/* Eco-Utility Hub Styles */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Set a height for the map container */
+#map {
+    height: 100%;
+    min-height: 400px;
+}
+
+/* Custom scrollbar for the location list */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #1e293b; /* slate-800 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569; /* slate-600 */
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #64748b; /* slate-500 */
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    background-color: #1e293b; /* slate-800 */
+    color: #cbd5e1; /* slate-300 */
+    border: 1px solid #334155; /* slate-700 */
+}
+
+.leaflet-popup-content-wrapper .leaflet-popup-content {
+    margin: 12px;
+    font-size: 14px;
+}
+
+.leaflet-popup-tip {
+     background-color: #1e293b; /* slate-800 */
+}
+
+.leaflet-tooltip {
+    border-radius: 6px;
+    background-color: rgba(30, 41, 59, 0.9); /* slate-800 */
+    color: #cbd5e1; /* slate-300 */
+    border: 1px solid #334155; /* slate-700 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
