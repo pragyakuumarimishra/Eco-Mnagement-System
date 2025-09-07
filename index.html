@@ -29,13 +29,6 @@
 </head>
 <body class="bg-slate-900 text-slate-300 antialiased">
 
-    <!-- Debug Info -->
-    <div id="debug-info" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; font-size: 12px; z-index: 10000; display: none;">
-        <div>CSS: <span id="css-status">❌</span></div>
-        <div>JS: <span id="js-status">❌</span></div>
-        <div>Tailwind: <span id="tailwind-status">❌</span></div>
-    </div>
-
     <!-- Header -->
     <header class="bg-slate-800/80 backdrop-blur-sm shadow-sm sticky top-0 z-20 border-b border-slate-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -504,65 +497,5 @@
 
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
-    
-    <!-- Debug Script -->
-    <script>
-        console.log('HTML loaded');
-        
-        // Show debug info
-        const debugDiv = document.getElementById('debug-info');
-        if (debugDiv) {
-            debugDiv.style.display = 'block';
-        }
-        
-        // Check if external files are loading
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM Content Loaded');
-            
-            // Check Tailwind
-            const body = document.body;
-            const computedStyle = window.getComputedStyle(body);
-            const bgColor = computedStyle.backgroundColor;
-            console.log('Body background color:', bgColor);
-            
-            if (bgColor.includes('rgb') && bgColor !== 'rgba(0, 0, 0, 0)') {
-                document.getElementById('tailwind-status').textContent = '✅';
-            }
-            
-            // Check if elements exist
-            const header = document.querySelector('header');
-            console.log('Header found:', !!header);
-            
-            // Check if main app elements exist
-            const wasteTab = document.getElementById('waste-tab');
-            const pickupTab = document.getElementById('pickup-tab');
-            const leakTab = document.getElementById('leak-tab');
-            
-            console.log('Waste tab:', !!wasteTab);
-            console.log('Pickup tab:', !!pickupTab);
-            console.log('Leak tab:', !!leakTab);
-            
-            // Update JS status
-            document.getElementById('js-status').textContent = '✅';
-        });
-        
-        // Check CSS loading
-        const link = document.querySelector('link[href*="styles.css"]');
-        if (link) {
-            link.onload = function() {
-                console.log('CSS loaded successfully');
-                document.getElementById('css-status').textContent = '✅';
-            };
-            link.onerror = function() {
-                console.error('CSS failed to load');
-                document.getElementById('css-status').textContent = '❌';
-            };
-        }
-        
-        // Error handling for missing resources
-        window.addEventListener('error', function(e) {
-            console.error('Resource loading error:', e.target.src || e.target.href);
-        });
-    </script>
 </body>
 </html>
