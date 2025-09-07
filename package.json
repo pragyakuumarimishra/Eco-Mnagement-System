@@ -2,11 +2,10 @@
   "name": "eco-utility-hub",
   "version": "1.0.0",
   "description": "A comprehensive web application for sustainable waste management and utility monitoring",
-  "main": "index_clean.html",
+  "main": "index.html",
   "scripts": {
     "start": "serve .",
-    "dev": "serve . -p 3000",
-    "build": "echo 'Static site - no build needed'"
+    "dev": "serve . -p 3000"
   },
   "keywords": [
     "waste-management",
@@ -16,11 +15,5 @@
     "web-app"
   ],
   "author": "Eco-Utility Hub Team",
-  "license": "MIT",
-  "devDependencies": {
-    "serve": "^14.0.0"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "license": "MIT"
 }
